@@ -1,0 +1,149 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global Safety Net: Default-deny all unmatched paths
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // Entity Validators
+    function isValidUser(data) {
+      return data.userId is string && data.userId == request.auth.uid &&
+             data.email is string && data.email.size() <= 256 &&
+             data.role in ['individual', 'therapist'] &&
+             (!('displayName' in data) || (data.displayName is string && data.displayName.size() <= 100)) &&
+             (!('heartRateBaseline' in data) || (data.heartRateBaseline is number && data.heartRateBaseline >= 30 && data.heartRateBaseline <= 220)) &&
+             (!('hrvBaseline' in data) || (data.hrvBaseline is number && data.hrvBaseline >= 0 && data.hrvBaseline <= 300));
+    }
+
+    function isValidBioChart(data, userId) {
+      return data.id is string && isValidId(data.id) &&
+             data.userId == userId &&
+             data.title is string && data.title.size() <= 150 &&
+             data.overallResonance is number && data.overallResonance >= 0 && data.overallResonance <= 100 &&
+             data.recommendedFrequencyHz is number && data.recommendedFrequencyHz >= 0.1 && data.recommendedFrequencyHz <= 10000 &&
+             (!('primaryImbalance' in data) || (data.primaryImbalance is string && data.primaryImbalance.size() <= 128)) &&
+             (!('soundWaveType' in data) || (data.soundWaveType is string && data.soundWaveType.size() <= 64)) &&
+             (!('neuralLinksData' in data) || (data.neuralLinksData is string && data.neuralLinksData.size() <= 10000));
+    }
+
+    function isValidHealingSession(data, userId) {
+      return data.id is string && isValidId(data.id) &&
+             data.userId == userId &&
+             data.bodyPart is string && data.bodyPart.size() <= 100 &&
+             data.frequencyHz is number && data.frequencyHz >= 0.1 && data.frequencyHz <= 10000 &&
+             data.durationSeconds is number && data.durationSeconds >= 0 && data.durationSeconds <= 86400 &&
+             (!('avgHeartRate' in data) || (data.avgHeartRate is number && data.avgHeartRate >= 30 && data.avgHeartRate <= 250)) &&
+             (!('coherenceScore' in data) || (data.coherenceScore is number && data.coherenceScore >= 0 && data.coherenceScore <= 100)) &&
+             (!('notes' in data) || (data.notes is string && data.notes.size() <= 2000));
+    }
+
+    function isValidBiometricLog(data, userId) {
+      return data.id is string && isValidId(data.id) &&
+             data.userId == userId &&
+             data.deviceSource is string && data.deviceSource.size() <= 100 &&
+             data.heartRate is number && data.heartRate >= 30 && data.heartRate <= 250 &&
+             (!('hrv' in data) || (data.hrv is number && data.hrv >= 0 && data.hrv <= 300));
+    }
+
+    function isValidDailyInsight(data, userId) {
+      return data.id is string && isValidId(data.id) &&
+             data.userId == userId &&
+             data.date is string && data.date.size() <= 20 &&
+             data.content is string && data.content.size() <= 3000 &&
+             (!('recommendedAction' in data) || (data.recommendedAction is string && data.recommendedAction.size() <= 500));
+    }
+
+    function isValidTherapistClient(data) {
+      return data.id is string && isValidId(data.id) &&
+             data.therapistId is string && data.therapistId == request.auth.uid &&
+             data.clientName is string && data.clientName.size() <= 120 &&
+             data.status in ['active', 'maintenance', 'completed'] &&
+             (!('targetBodyParts' in data) || (data.targetBodyParts is string && data.targetBodyParts.size() <= 500)) &&
+             (!('prescribedFrequencies' in data) || (data.prescribedFrequencies is string && data.prescribedFrequencies.size() <= 1000)) &&
+             (!('lastSessionDate' in data) || (data.lastSessionDate is string && data.lastSessionDate.size() <= 50));
+    }
+
+    // Collection: Users
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isOwner(userId) && isValidUser(incoming());
+      allow update: if isOwner(userId) && isValidUser(incoming()) &&
+                       incoming().userId == existing().userId;
+      allow delete: if isOwner(userId);
+
+      // Subcollection: BioCharts
+      match /bioCharts/{chartId} {
+        allow get: if isOwner(userId);
+        allow list: if isOwner(userId) && resource.data.userId == request.auth.uid;
+        allow create: if isOwner(userId) && isValidId(chartId) && isValidBioChart(incoming(), userId);
+        allow update: if isOwner(userId) && isValidId(chartId) && isValidBioChart(incoming(), userId) &&
+                         incoming().userId == existing().userId;
+        allow delete: if isOwner(userId);
+      }
+
+      // Subcollection: HealingSessions
+      match /sessions/{sessionId} {
+        allow get: if isOwner(userId);
+        allow list: if isOwner(userId) && resource.data.userId == request.auth.uid;
+        allow create: if isOwner(userId) && isValidId(sessionId) && isValidHealingSession(incoming(), userId);
+        allow update: if isOwner(userId) && isValidId(sessionId) && isValidHealingSession(incoming(), userId) &&
+                         incoming().userId == existing().userId;
+        allow delete: if isOwner(userId);
+      }
+
+      // Subcollection: BiometricLogs
+      match /biometricLogs/{logId} {
+        allow get: if isOwner(userId);
+        allow list: if isOwner(userId) && resource.data.userId == request.auth.uid;
+        allow create: if isOwner(userId) && isValidId(logId) && isValidBiometricLog(incoming(), userId);
+        allow update: if isOwner(userId) && isValidId(logId) && isValidBiometricLog(incoming(), userId) &&
+                         incoming().userId == existing().userId;
+        allow delete: if isOwner(userId);
+      }
+
+      // Subcollection: DailyInsights
+      match /dailyInsights/{insightId} {
+        allow get: if isOwner(userId);
+        allow list: if isOwner(userId) && resource.data.userId == request.auth.uid;
+        allow create: if isOwner(userId) && isValidId(insightId) && isValidDailyInsight(incoming(), userId);
+        allow update: if isOwner(userId) && isValidId(insightId) && isValidDailyInsight(incoming(), userId) &&
+                         incoming().userId == existing().userId;
+        allow delete: if isOwner(userId);
+      }
+    }
+
+    // Collection: Therapist Clients (for clinical workflows)
+    match /therapistClients/{clientId} {
+      allow get: if isSignedIn() && (resource.data.therapistId == request.auth.uid);
+      allow list: if isSignedIn() && (resource.data.therapistId == request.auth.uid);
+      allow create: if isSignedIn() && isValidId(clientId) && isValidTherapistClient(incoming());
+      allow update: if isSignedIn() && isValidId(clientId) && isValidTherapistClient(incoming()) &&
+                       incoming().therapistId == existing().therapistId;
+      allow delete: if isSignedIn() && (resource.data.therapistId == request.auth.uid);
+    }
+  }
+}

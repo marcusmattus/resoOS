@@ -1,0 +1,6 @@
+{
+  "name": "ResOS - Resonate Origin System",
+  "description": "Biofield electromagnetic scanner, neural link bio chart, biometric resonance therapy, and real-time visual feedback loops.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

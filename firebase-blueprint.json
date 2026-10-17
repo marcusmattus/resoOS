@@ -1,0 +1,287 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User account profile and biometric baselines in ResOS",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "The Firebase Auth UID of the user",
+          "maxLength": 128
+        },
+        "email": {
+          "type": "string",
+          "description": "User email address",
+          "maxLength": 256
+        },
+        "displayName": {
+          "type": "string",
+          "description": "User full name or alias",
+          "maxLength": 100
+        },
+        "role": {
+          "type": "string",
+          "description": "User mode: individual or therapist",
+          "enum": ["individual", "therapist"]
+        },
+        "heartRateBaseline": {
+          "type": "number",
+          "description": "Resting heart rate in BPM"
+        },
+        "hrvBaseline": {
+          "type": "number",
+          "description": "Heart Rate Variability (RMSSD) in ms"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp string or server time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp string or server time"
+        }
+      },
+      "required": ["userId", "email", "role"]
+    },
+    "BioChart": {
+      "title": "BioChart",
+      "description": "ResOS Bio Chart mapping neural links to body parts, organs, and resonance frequencies",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique chart ID",
+          "maxLength": 128
+        },
+        "userId": {
+          "type": "string",
+          "description": "Owner user ID",
+          "maxLength": 128
+        },
+        "title": {
+          "type": "string",
+          "description": "Name of the bio chart assessment",
+          "maxLength": 150
+        },
+        "overallResonance": {
+          "type": "number",
+          "description": "Composite resonance score (0-100)"
+        },
+        "primaryImbalance": {
+          "type": "string",
+          "description": "Primary identified body part or neural link of imbalance",
+          "maxLength": 128
+        },
+        "recommendedFrequencyHz": {
+          "type": "number",
+          "description": "Primary prescribed healing frequency in Hertz"
+        },
+        "soundWaveType": {
+          "type": "string",
+          "description": "Waveform type: sine, binaural, isochronic, solfeggio",
+          "maxLength": 64
+        },
+        "neuralLinksData": {
+          "type": "string",
+          "description": "JSON serialized detail of neural link metrics and harmonic output",
+          "maxLength": 10000
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp created"
+        }
+      },
+      "required": ["id", "userId", "title", "overallResonance", "recommendedFrequencyHz"]
+    },
+    "HealingSession": {
+      "title": "HealingSession",
+      "description": "A completed or active frequency resonance healing session",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique session ID",
+          "maxLength": 128
+        },
+        "userId": {
+          "type": "string",
+          "description": "Owner user ID",
+          "maxLength": 128
+        },
+        "bodyPart": {
+          "type": "string",
+          "description": "Target body part or neural link",
+          "maxLength": 100
+        },
+        "frequencyHz": {
+          "type": "number",
+          "description": "Frequency applied in Hertz"
+        },
+        "durationSeconds": {
+          "type": "number",
+          "description": "Session duration in seconds"
+        },
+        "avgHeartRate": {
+          "type": "number",
+          "description": "Average heart rate during session"
+        },
+        "coherenceScore": {
+          "type": "number",
+          "description": "Biofeedback coherence resonance score (0-100)"
+        },
+        "notes": {
+          "type": "string",
+          "description": "Session reflections or therapist clinical observations",
+          "maxLength": 2000
+        },
+        "completedAt": {
+          "type": "string",
+          "description": "Session completion timestamp"
+        }
+      },
+      "required": ["id", "userId", "bodyPart", "frequencyHz", "durationSeconds"]
+    },
+    "BiometricLog": {
+      "title": "BiometricLog",
+      "description": "Telemetry synchronised from wearable devices",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Log ID",
+          "maxLength": 128
+        },
+        "userId": {
+          "type": "string",
+          "description": "Owner user ID",
+          "maxLength": 128
+        },
+        "deviceSource": {
+          "type": "string",
+          "description": "Name of synced wearable (e.g. Apple Watch, Garmin, Oura, Polar H10, BioSensor BLE)",
+          "maxLength": 100
+        },
+        "heartRate": {
+          "type": "number",
+          "description": "Instantaneous or average heart rate"
+        },
+        "hrv": {
+          "type": "number",
+          "description": "Heart Rate Variability in ms"
+        },
+        "timestamp": {
+          "type": "string",
+          "description": "Sync timestamp"
+        }
+      },
+      "required": ["id", "userId", "deviceSource", "heartRate"]
+    },
+    "DailyInsight": {
+      "title": "DailyInsight",
+      "description": "Daily bio-harmonic wellness insight and resonant advice",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Insight ID",
+          "maxLength": 128
+        },
+        "userId": {
+          "type": "string",
+          "description": "Owner user ID",
+          "maxLength": 128
+        },
+        "date": {
+          "type": "string",
+          "description": "Date YYYY-MM-DD",
+          "maxLength": 20
+        },
+        "content": {
+          "type": "string",
+          "description": "Insight and guidance text",
+          "maxLength": 3000
+        },
+        "recommendedAction": {
+          "type": "string",
+          "description": "Actionable suggestion or resonance frequency",
+          "maxLength": 500
+        },
+        "generatedAt": {
+          "type": "string",
+          "description": "Timestamp generated"
+        }
+      },
+      "required": ["id", "userId", "date", "content"]
+    },
+    "TherapistClient": {
+      "title": "TherapistClient",
+      "description": "Therapist client management record for clinical ResOS workflows",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Record ID",
+          "maxLength": 128
+        },
+        "therapistId": {
+          "type": "string",
+          "description": "Therapist user ID",
+          "maxLength": 128
+        },
+        "clientName": {
+          "type": "string",
+          "description": "Client full name",
+          "maxLength": 120
+        },
+        "targetBodyParts": {
+          "type": "string",
+          "description": "Target regions of imbalance",
+          "maxLength": 500
+        },
+        "prescribedFrequencies": {
+          "type": "string",
+          "description": "Prescribed resonance protocol and sound frequencies",
+          "maxLength": 1000
+        },
+        "status": {
+          "type": "string",
+          "description": "Status of clinical intervention",
+          "enum": ["active", "maintenance", "completed"]
+        },
+        "lastSessionDate": {
+          "type": "string",
+          "description": "Last session date",
+          "maxLength": 50
+        }
+      },
+      "required": ["id", "therapistId", "clientName", "status"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profile with role, settings, and baseline biometrics"
+    },
+    "/users/{userId}/bioCharts/{chartId}": {
+      "schema": "BioChart",
+      "description": "Neural link bio charts and frequency resonance mappings for the user"
+    },
+    "/users/{userId}/sessions/{sessionId}": {
+      "schema": "HealingSession",
+      "description": "Recorded sound and frequency healing sessions with biofeedback"
+    },
+    "/users/{userId}/biometricLogs/{logId}": {
+      "schema": "BiometricLog",
+      "description": "Wearable sensor sync logs including heart rate and HRV"
+    },
+    "/users/{userId}/dailyInsights/{insightId}": {
+      "schema": "DailyInsight",
+      "description": "Personalized daily wellness insights and resonance analysis"
+    },
+    "/therapistClients/{clientId}": {
+      "schema": "TherapistClient",
+      "description": "Therapist client assignment and clinical protocol record"
+    }
+  }
+}
